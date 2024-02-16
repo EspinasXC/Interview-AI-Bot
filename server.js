@@ -9,7 +9,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 app.use(express.json());
 const MODEL_NAME = "gemini-pro";
-const API_KEY = "AIzaSyDp4eUY70Zt7zUoP_2vnA77zMYNCUAUHio";
+const API_KEY = "YOUR_API_KEY";
 
 async function runChat(userInput) {
   const genAI = new GoogleGenerativeAI(API_KEY);
