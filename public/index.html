@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Interview Prep Bot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .question {
+            margin-bottom: 20px;
+        }
+        .answer {
+            margin-bottom: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .feedback {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="question">
+            <strong>Question:</strong>
+            <p id="questionText">Loading question...</p>
+        </div>
+        <div class="answer">
+            <strong>Your Answer:</strong>
+            <textarea id="answerText"></textarea>
+        </div>
+        <button onclick="submitAnswer()">Submit Answer</button>
+        <div class="feedback" id="feedbackText"></div>
+    </div>
+
+    <script>
+        async function getQuestion() {
+            const response = await fetch('/get-question');
+            const data = await response.json();
+            document.getElementById('questionText').innerText = data.question;
+        }
+
+        async function submitAnswer() {
+            const answer = document.getElementById('answerText').value;
+            const response = await fetch('/submit-answer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ answer: answer })
+            });
+            const data = await response.json();
+            document.getElementById('feedbackText').innerText = data.feedback;
+        }
+
+        getQuestion();
+    </script>
+</body>
+</html>
