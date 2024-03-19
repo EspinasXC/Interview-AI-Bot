@@ -4,8 +4,6 @@ const bodyParser = require('body-parser');
 const {OpenAI} = require('openai');
 const path = require('path');
 
-
-
 const app = express();
 const port = 3000;
 
@@ -16,17 +14,24 @@ const openai = new OpenAI({apiKey: process.env.OPENAI_API_KEY});
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
-const questions = [
-    "Describe a situation where you had to work in a team.",
-    "Explain a complex concept in simple terms.",
-    "Tell us about a time you overcame a challenge."
-];
-
-app.get('/get-question', (req, res) => {
-    const randomIndex = Math.floor(Math.random() * questions.length);
-    const question = questions[randomIndex];
-    res.json({ question });
+app.post('/get-question', async (req, res) => {
+    try {
+        const response = await openai.chat.completions.create({
+            model: "gpt-3.5-turbo",
+            messages: [
+                { role: "system", content: "You are going to help me prep for my interviews." },
+                { role: "user", content: "Generate a single random behavioral style question that could be asked in a job interview." }
+            ],
+            max_tokens: 150
+        });
+        const question = response.choices[0].message.content.trim();
+        res.json({ question });
+    } catch (error) {
+        console.error('Error calling OpenAI API:', error);
+        res.status(500).json({ feedback: 'Error generating your question. Please try again.' });
+    }
 });
+
 
 app.post('/submit-answer', async (req, res) => {
     const { answer } = req.body;
