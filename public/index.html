@@ -18,16 +18,8 @@
         .question {
             margin-bottom: 20px;
         }
-        .answer {
-            margin-bottom: 20px;
-        }
-        textarea {
-            width: 100%;
-            height: 150px;
-            padding: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+        .feedback {
+            margin-top: 20px;
         }
         button {
             padding: 10px 20px;
@@ -40,9 +32,6 @@
         button:hover {
             background-color: #0056b3;
         }
-        .feedback {
-            margin-top: 20px;
-        }
     </style>
 </head>
 <body>
@@ -52,15 +41,49 @@
             <p id="questionText">Press "Get Question" to start</p>
             <button onclick="getQuestion()">Get Question</button>
         </div>
-        <div class="answer">
-            <strong>Your Answer:</strong>
-            <textarea id="answerText"></textarea>
-        </div>
-        <button onclick="submitAnswer()">Submit Answer</button>
+        <button id="startRecord">Start Recording</button>
+        <button id="stopRecord" disabled>Stop Recording</button>
         <div class="feedback" id="feedbackText"></div>
     </div>
 
     <script>
+        let mediaRecorder;
+        let audioChunks = [];
+
+        document.getElementById('startRecord').onclick = () => {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });;
+                    mediaRecorder.ondataavailable = event => {
+                        audioChunks.push(event.data);
+                    };
+                    mediaRecorder.start();
+
+                    document.getElementById('startRecord').disabled = true;
+                    document.getElementById('stopRecord').disabled = false;
+                });
+        };
+
+        document.getElementById('stopRecord').onclick = () => {
+            mediaRecorder.stop();
+
+            mediaRecorder.onstop = async () => {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/mpeg' });
+                audioChunks = [];
+
+                const formData = new FormData();
+                formData.append("audio", audioBlob);
+
+                const response = await fetch('/transcribe-audio', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                submitAnswer(data.transcribedText);
+            };
+        };
+
         async function getQuestion() {
             const response = await fetch('/get-question', {
                 method: 'POST',
@@ -69,14 +92,13 @@
             document.getElementById('questionText').innerText = data.question;
         }
 
-        async function submitAnswer() {
-            const answer = document.getElementById('answerText').value;
+        async function submitAnswer(answer) {
             const response = await fetch('/submit-answer', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ answer: answer })
+                body: JSON.stringify({ answer })
             });
             const data = await response.json();
             document.getElementById('feedbackText').innerText = data.feedback;
