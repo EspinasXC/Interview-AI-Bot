@@ -49,7 +49,8 @@
     <div class="container">
         <div class="question">
             <strong>Question:</strong>
-            <p id="questionText">Loading question...</p>
+            <p id="questionText">Press "Get Question" to start</p>
+            <button onclick="getQuestion()">Get Question</button>
         </div>
         <div class="answer">
             <strong>Your Answer:</strong>
@@ -61,7 +62,9 @@
 
     <script>
         async function getQuestion() {
-            const response = await fetch('/get-question');
+            const response = await fetch('/get-question', {
+                method: 'POST',
+            });
             const data = await response.json();
             document.getElementById('questionText').innerText = data.question;
         }
@@ -78,8 +81,6 @@
             const data = await response.json();
             document.getElementById('feedbackText').innerText = data.feedback;
         }
-
-        getQuestion();
     </script>
 </body>
 </html>
