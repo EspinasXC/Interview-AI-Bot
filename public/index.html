@@ -42,9 +42,9 @@
         button:hover {
             background-color: #0056b3;
         }
-        .loading-gif {
+        .loading-gif, .recording-gif {
             display: none;
-            width: 50px; /* Adjust this value as needed */
+            width: 50px;
             height: auto;
             margin: 10px auto;
         }
@@ -60,15 +60,18 @@
             <img src="loading.gif" class="loading-gif" id="loadingQuestion"/>
         </div>
         <div class="recording-section">
-            <button id="startRecord">Start Recording</button>
-            <button id="stopRecord" disabled>Stop Recording</button>
-            <img src="loading.gif" class="loading-gif" id="loadingFeedback"/>
+            <button id="startRecord" onclick="startRecording()">Start Recording</button>
+            <button id="stopRecord" onclick="stopRecording()" disabled>Stop Recording</button>
+            <img src="recording.gif" class="recording-gif" id="recordingStatus"/>
         </div>
         <div class="feedback-section">
             <div class="section-header">Feedback:</div>
+            <img src="loading.gif" class="loading-gif" id="loadingFeedback"/>
             <div id="feedbackText"></div>
         </div>
+        
     </div>
+
     <script>
         let mediaRecorder;
         let audioChunks = [];
@@ -85,8 +88,10 @@
 
                     mediaRecorder.start();
 
-                    document.getElementById('startRecord').disabled = true;
+                    document.getElementById('startRecord').style.display = 'none';
                     document.getElementById('stopRecord').disabled = false;
+                    document.getElementById('stopRecord').style.display = 'inline-block';
+                    document.getElementById('recordingStatus').style.display = 'block';
                 })
                 .catch(error => {
                     console.error('Error accessing media devices:', error);
@@ -95,15 +100,15 @@
 
         function stopRecording() {
             mediaRecorder.stop();
-            document.getElementById('startRecord').disabled = false;
-            document.getElementById('stopRecord').disabled = true;
+
+            document.getElementById('stopRecord').style.display = 'none';
+            document.getElementById('recordingStatus').style.display = 'none';
+            document.getElementById('startRecord').style.display = 'inline-block';
 
             mediaRecorder.onstop = async () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
                 const formData = new FormData();
                 formData.append("audio", audioBlob);
-
-                document.getElementById('loadingFeedback').style.display = 'block';
 
                 const transcriptionResponse = await fetch('/transcribe-audio', {
                     method: 'POST',
@@ -112,14 +117,9 @@
                 const transcriptionData = await transcriptionResponse.json();
                 const transcribedText = transcriptionData.transcribedText;
 
-                document.getElementById('loadingFeedback').style.display = 'none';
-                
                 submitAnswer(transcribedText);
             };
         }
-
-        document.getElementById('startRecord').onclick = startRecording;
-        document.getElementById('stopRecord').onclick = stopRecording;
 
         async function getQuestion() {
             document.getElementById('loadingQuestion').style.display = 'block';
@@ -129,10 +129,13 @@
             const data = await response.json();
             document.getElementById('loadingQuestion').style.display = 'none';
             document.getElementById('questionText').innerText = data.question;
-            document.getElementById('feedbackText').innerText = ''; // Clear previous feedback
+            document.getElementById('feedbackText').innerText = '';
         }
 
         async function submitAnswer(answer) {
+            document.getElementById('loadingFeedback').style.display = 'block'; // Show loading gif
+            document.getElementById('feedbackText').innerText = ''; // Clear previous feedback
+
             const response = await fetch('/submit-answer', {
                 method: 'POST',
                 headers: {
@@ -141,6 +144,8 @@
                 body: JSON.stringify({ answer })
             });
             const data = await response.json();
+
+            document.getElementById('loadingFeedback').style.display = 'none'; // Hide loading gif
             document.getElementById('feedbackText').innerText = data.feedback;
         }
     </script>
