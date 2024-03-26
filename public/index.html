@@ -2,24 +2,33 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Interview Prep Bot</title>
+    <title>AI Interview Bot</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             padding: 20px;
+            background-color: #f4f4f4;
+            color: #333;
         }
         .container {
-            max-width: 600px;
+            max-width: 800px;
             margin: auto;
             padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-        .question {
+        .header {
+            font-size: 24px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .section-header {
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+        .question, .feedback-section, .recording-section {
             margin-bottom: 20px;
-        }
-        .feedback {
-            margin-top: 20px;
         }
         button {
             padding: 10px 20px;
@@ -28,40 +37,54 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            font-size: 16px;
         }
         button:hover {
             background-color: #0056b3;
+        }
+        .loading-gif {
+            display: none;
+            width: 50px; /* Adjust this value as needed */
+            height: auto;
+            margin: 10px auto;
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="header">AI Interview Bot</div>
         <div class="question">
-            <strong>Question:</strong>
+            <div class="section-header">Question:</div>
             <p id="questionText">Press "Get Question" to start</p>
             <button onclick="getQuestion()">Get Question</button>
+            <img src="loading.gif" class="loading-gif" id="loadingQuestion"/>
         </div>
-        <button id="startRecord">Start Recording</button>
-        <button id="stopRecord" disabled>Stop Recording</button>
-        <div class="feedback" id="feedbackText"></div>
+        <div class="recording-section">
+            <button id="startRecord">Start Recording</button>
+            <button id="stopRecord" disabled>Stop Recording</button>
+            <img src="loading.gif" class="loading-gif" id="loadingFeedback"/>
+        </div>
+        <div class="feedback-section">
+            <div class="section-header">Feedback:</div>
+            <div id="feedbackText"></div>
+        </div>
     </div>
-
     <script>
         let mediaRecorder;
         let audioChunks = [];
-    
+
         function startRecording() {
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(stream => {
                     mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
                     audioChunks = [];
-    
+
                     mediaRecorder.ondataavailable = event => {
                         audioChunks.push(event.data);
                     };
-    
+
                     mediaRecorder.start();
-    
+
                     document.getElementById('startRecord').disabled = true;
                     document.getElementById('stopRecord').disabled = false;
                 })
@@ -69,42 +92,46 @@
                     console.error('Error accessing media devices:', error);
                 });
         }
-    
+
         function stopRecording() {
             mediaRecorder.stop();
             document.getElementById('startRecord').disabled = false;
             document.getElementById('stopRecord').disabled = true;
-    
+
             mediaRecorder.onstop = async () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-    
                 const formData = new FormData();
                 formData.append("audio", audioBlob);
-    
+
+                document.getElementById('loadingFeedback').style.display = 'block';
+
                 const transcriptionResponse = await fetch('/transcribe-audio', {
                     method: 'POST',
                     body: formData
                 });
                 const transcriptionData = await transcriptionResponse.json();
                 const transcribedText = transcriptionData.transcribedText;
-    
-                // Now submit the transcribed text to get feedback
+
+                document.getElementById('loadingFeedback').style.display = 'none';
+                
                 submitAnswer(transcribedText);
             };
         }
-    
+
         document.getElementById('startRecord').onclick = startRecording;
         document.getElementById('stopRecord').onclick = stopRecording;
-    
+
         async function getQuestion() {
+            document.getElementById('loadingQuestion').style.display = 'block';
             const response = await fetch('/get-question', {
                 method: 'POST',
             });
             const data = await response.json();
+            document.getElementById('loadingQuestion').style.display = 'none';
             document.getElementById('questionText').innerText = data.question;
             document.getElementById('feedbackText').innerText = ''; // Clear previous feedback
         }
-    
+
         async function submitAnswer(answer) {
             const response = await fetch('/submit-answer', {
                 method: 'POST',
@@ -117,6 +144,5 @@
             document.getElementById('feedbackText').innerText = data.feedback;
         }
     </script>
-            
 </body>
 </html>
