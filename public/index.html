@@ -2,47 +2,100 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Interview Prep Bot</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
         }
+
         .container {
-            max-width: 600px;
-            margin: auto;
-            padding: 20px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 30px;
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
         }
+
+        h1 {
+            text-align: center;
+            color: #007bff;
+            margin-bottom: 30px;
+        }
+
         .question {
-            margin-bottom: 20px;
+            margin-bottom: 30px;
         }
-        .feedback {
-            margin-top: 20px;
+
+        .question p {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #333;
+            
         }
+
         button {
-            padding: 10px 20px;
+            padding: 12px 25px;
             background-color: #007bff;
-            color: white;
+            color: #fff;
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: block;
+            margin: 0 auto;
+            margin-bottom: 10px;
         }
+
         button:hover {
             background-color: #0056b3;
+        }
+
+        .feedback {
+            text-align: center;
+            font-size: 18px;
+            color: #28a745;
+            margin-top: 20px;
+        }
+
+        .recording-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .audio-controls {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        audio {
+            margin-top: 10px;
+            width: 100%;
+            max-width: 400px;
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <h1>Interview Prep Bot</h1>
         <div class="question">
             <strong>Question:</strong>
             <p id="questionText">Press "Get Question" to start</p>
             <button onclick="getQuestion()">Get Question</button>
         </div>
-        <button id="startRecord">Start Recording</button>
-        <button id="stopRecord" disabled>Stop Recording</button>
+        <div class="recording-container">
+            <button id="startRecord">Start Recording</button>
+            <button id="stopRecord" disabled>Stop Recording</button>
+        </div>
+        <div class="audio-controls" id="audioControls" style="display: none;">
+            <audio controls id="audioPlayer">
+                Your browser does not support the audio element.
+            </audio>
+        </div>
         <div class="feedback" id="feedbackText"></div>
     </div>
 
@@ -53,7 +106,7 @@
         document.getElementById('startRecord').onclick = () => {
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(stream => {
-                    mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });;
+                    mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
                     mediaRecorder.ondataavailable = event => {
                         audioChunks.push(event.data);
                     };
@@ -70,6 +123,10 @@
             mediaRecorder.onstop = async () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/mpeg' });
                 audioChunks = [];
+
+                const audioUrl = URL.createObjectURL(audioBlob);
+                document.getElementById('audioPlayer').src = audioUrl;
+                document.getElementById('audioControls').style.display = 'block';
 
                 const formData = new FormData();
                 formData.append("audio", audioBlob);
