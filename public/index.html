@@ -35,7 +35,6 @@
             font-size: 18px;
             line-height: 1.6;
             color: #333;
-            
         }
 
         button {
@@ -48,7 +47,6 @@
             transition: background-color 0.3s ease;
             display: block;
             margin: 0 auto;
-            margin-bottom: 10px;
         }
 
         button:hover {
@@ -85,11 +83,12 @@
         <div class="question">
             <strong>Question:</strong>
             <p id="questionText">Press "Get Question" to start</p>
-            <button onclick="getQuestion()">Get Question</button>
+            <button id="getQuestionBtn" onclick="getQuestion()">Get Question</button>
         </div>
         <div class="recording-container">
-            <button id="startRecord">Start Recording</button>
-            <button id="stopRecord" disabled>Stop Recording</button>
+            <button id="startRecord" onclick="startRecording()">Start Recording</button>
+            <button id="stopRecord" disabled onclick="stopRecording()" style="display: none;">Stop Recording</button>
+            <div id="recordingIndicator" style="display: none;">Recording...</div>
         </div>
         <div class="audio-controls" id="audioControls" style="display: none;">
             <audio controls id="audioPlayer">
@@ -97,13 +96,15 @@
             </audio>
         </div>
         <div class="feedback" id="feedbackText"></div>
+        <div id="loadingSpinner" style="display: none;">Loading...</div>
+        <button id="clearBtn" onclick="clearRecording()" style="display: none;">Clear Recording</button>
     </div>
 
     <script>
         let mediaRecorder;
         let audioChunks = [];
 
-        document.getElementById('startRecord').onclick = () => {
+        function startRecording() {
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(stream => {
                     mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
@@ -112,12 +113,13 @@
                     };
                     mediaRecorder.start();
 
-                    document.getElementById('startRecord').disabled = true;
-                    document.getElementById('stopRecord').disabled = false;
+                    document.getElementById('startRecord').style.display = 'none';
+                    document.getElementById('stopRecord').style.display = 'block';
+                    document.getElementById('recordingIndicator').style.display = 'block';
                 });
-        };
+        }
 
-        document.getElementById('stopRecord').onclick = () => {
+        function stopRecording() {
             mediaRecorder.stop();
 
             mediaRecorder.onstop = async () => {
@@ -139,7 +141,7 @@
 
                 submitAnswer(data.transcribedText);
             };
-        };
+        }
 
         async function getQuestion() {
             const response = await fetch('/get-question', {
