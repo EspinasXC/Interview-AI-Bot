@@ -27,7 +27,7 @@
             margin-bottom: 10px;
             font-size: 20px;
         }
-        .question, .feedback-section, .recording-section {
+        .question, .feedback-section, .recording-section, .transcription-section {
             margin-bottom: 20px;
         }
         button {
@@ -42,7 +42,7 @@
         button:hover {
             background-color: #0056b3;
         }
-        .loading-gif, .recording-gif {
+        .loading-gif {
             display: none;
             width: 50px;
             height: auto;
@@ -62,14 +62,19 @@
         <div class="recording-section">
             <button id="startRecord" onclick="startRecording()">Start Recording</button>
             <button id="stopRecord" onclick="stopRecording()" disabled>Stop Recording</button>
-            <img src="recording.gif" class="recording-gif" id="recordingStatus"/>
+            <img src="recording.gif" class="loading-gif" id="recordingStatus" style="display: none;"/>
+        </div>
+        
+        <div class="transcription-section">
+            <div class="section-header">Transcribed Text:</div>
+            <p id="transcribedText">Waiting on user's response</p>
+            <img src="loading.gif" class="loading-gif" id="loadingTranscription"/>
         </div>
         <div class="feedback-section">
             <div class="section-header">Feedback:</div>
             <img src="loading.gif" class="loading-gif" id="loadingFeedback"/>
             <div id="feedbackText"></div>
         </div>
-        
     </div>
 
     <script>
@@ -91,7 +96,7 @@
                     document.getElementById('startRecord').style.display = 'none';
                     document.getElementById('stopRecord').disabled = false;
                     document.getElementById('stopRecord').style.display = 'inline-block';
-                    document.getElementById('recordingStatus').style.display = 'block';
+                    document.getElementById('recordingStatus').style.display = 'block'; // Show recording gif
                 })
                 .catch(error => {
                     console.error('Error accessing media devices:', error);
@@ -102,8 +107,8 @@
             mediaRecorder.stop();
 
             document.getElementById('stopRecord').style.display = 'none';
-            document.getElementById('recordingStatus').style.display = 'none';
             document.getElementById('startRecord').style.display = 'inline-block';
+            document.getElementById('recordingStatus').style.display = 'none';
 
             mediaRecorder.onstop = async () => {
                 const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
@@ -117,9 +122,15 @@
                 const transcriptionData = await transcriptionResponse.json();
                 const transcribedText = transcriptionData.transcribedText;
 
+                document.getElementById('transcribedText').innerText = transcribedText;
+                document.getElementById('loadingTranscription').style.display = 'none';
+                
                 submitAnswer(transcribedText);
             };
         }
+
+        document.getElementById('startRecord').onclick = startRecording;
+        document.getElementById('stopRecord').onclick = stopRecording;
 
         async function getQuestion() {
             document.getElementById('loadingQuestion').style.display = 'block';
@@ -133,9 +144,7 @@
         }
 
         async function submitAnswer(answer) {
-            document.getElementById('loadingFeedback').style.display = 'block'; // Show loading gif
-            document.getElementById('feedbackText').innerText = ''; // Clear previous feedback
-
+            document.getElementById('loadingFeedback').style.display = 'block';
             const response = await fetch('/submit-answer', {
                 method: 'POST',
                 headers: {
@@ -144,8 +153,7 @@
                 body: JSON.stringify({ answer })
             });
             const data = await response.json();
-
-            document.getElementById('loadingFeedback').style.display = 'none'; // Hide loading gif
+            document.getElementById('loadingFeedback').style.display = 'none';
             document.getElementById('feedbackText').innerText = data.feedback;
         }
     </script>
