@@ -48,7 +48,7 @@ app.post('/submit-answer', async (req, res) => {
             model: "gpt-3.5-turbo",
             messages: [
                 { role: "system", content: "You are a well-educated bot that grades interview responses." },
-                { role: "user", content: `Here's an interview answer for grading: ${answer}` }
+                { role: "user", content: `Here's an interview answer for grading: ${answer}. When grading this response be sure to critique the question in a way that is helpful for the user to better respond in the future.` }
             ],
             max_tokens: 150
         });
