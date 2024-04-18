@@ -47,8 +47,14 @@ app.post('/submit-answer', async (req, res) => {
         const response = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",
             messages: [
-                { role: "system", content: "You are a well-educated bot that grades interview responses." },
-                { role: "user", content: `Here's an interview answer for grading: ${answer}. When grading this response be sure to critique the question in a way that is helpful for the user to better respond in the future.` }
+                {
+                    "role": "system",
+                    "content": "You are a sophisticated AI trained to evaluate and provide constructive feedback on interview responses using the STAR method."
+                  },
+                  {
+                    "role": "user",
+                    "content": "Here's my interview response for grading: ${answer}. Please critique this response thoroughly, focusing on how effectively I've used the STAR method, the clarity and relevance of my examples, and any suggestions for improvement. Your feedback should help me refine my approach and enhance my response for future interviews."
+                  }
             ],
             max_tokens: 150
         });
