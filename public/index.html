@@ -102,33 +102,37 @@
                     console.error('Error accessing media devices:', error);
                 });
         }
-
         function stopRecording() {
-            mediaRecorder.stop();
+        mediaRecorder.stop();
 
-            document.getElementById('stopRecord').style.display = 'none';
-            document.getElementById('startRecord').style.display = 'inline-block';
-            document.getElementById('recordingStatus').style.display = 'none';
+    document.getElementById('stopRecord').style.display = 'none';
+    document.getElementById('startRecord').style.display = 'inline-block';
+    document.getElementById('recordingStatus').style.display = 'none'; // Hide recording gif
 
-            mediaRecorder.onstop = async () => {
-                const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                const formData = new FormData();
-                formData.append("audio", audioBlob);
+    mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const formData = new FormData();
+        formData.append("audio", audioBlob);
 
-                const transcriptionResponse = await fetch('/transcribe-audio', {
-                    method: 'POST',
-                    body: formData
-                });
-                const transcriptionData = await transcriptionResponse.json();
-                const transcribedText = transcriptionData.transcribedText;
+        document.getElementById('loadingTranscription').style.display = 'block';
 
-                document.getElementById('transcribedText').innerText = transcribedText;
-                document.getElementById('loadingTranscription').style.display = 'none';
-                
-                submitAnswer(transcribedText);
-            };
-        }
+        const transcriptionResponse = await fetch('/transcribe-audio', {
+            method: 'POST',
+            body: formData
+        });
+        const transcriptionData = await transcriptionResponse.json();
+        const transcribedText = transcriptionData.transcribedText;
 
+        document.getElementById('transcribedText').innerText = transcribedText;
+        document.getElementById('loadingTranscription').style.display = 'none';
+        
+        // Capture the question from the UI
+        const questionText = document.getElementById('questionText').innerText;
+
+        // Now submit the transcribed text and the question to get feedback
+        submitAnswer(transcribedText, questionText);
+    };
+}
         document.getElementById('startRecord').onclick = startRecording;
         document.getElementById('stopRecord').onclick = stopRecording;
 
@@ -143,19 +147,22 @@
             document.getElementById('feedbackText').innerText = '';
         }
 
-        async function submitAnswer(answer) {
-            document.getElementById('loadingFeedback').style.display = 'block';
-            const response = await fetch('/submit-answer', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ answer })
-            });
-            const data = await response.json();
-            document.getElementById('loadingFeedback').style.display = 'none';
-            document.getElementById('feedbackText').innerText = data.feedback;
-        }
+        document.getElementById('stopRecord').onclick = stopRecording;
+
+async function submitAnswer(answer, question) {
+    document.getElementById('loadingFeedback').style.display = 'block';
+    const response = await fetch('/submit-answer', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ answer, question }) // Ensure both answer and question are sent
+    });
+    const data = await response.json();
+    document.getElementById('loadingFeedback').style.display = 'none';
+    document.getElementById('feedbackText').innerText = data.feedback;
+}
+
     </script>
 </body>
 </html>

@@ -28,7 +28,7 @@ app.post('/get-question', async (req, res) => {
             model: "gpt-3.5-turbo",
             messages: [
                 { role: "system", content: "You are going to help me prep for my interviews." },
-                { role: "user", content: "Generate a single random behavioral style question that could be asked in a job interview." }
+                { role: "user", content: "Generate a single random behavioral style question that could be asked in a job interview. Make the questions unique so you don't repeat any" }
             ],
             max_tokens: 150
         });
@@ -42,21 +42,23 @@ app.post('/get-question', async (req, res) => {
 
 
 app.post('/submit-answer', async (req, res) => {
-    const { answer } = req.body;
+    const { answer, question } = req.body;
+    console.log("Received answer:", answer);
+    console.log("Received question:", question); // This should now log correctly
     try {
         const response = await openai.chat.completions.create({
             model: "gpt-3.5-turbo",
             messages: [
                 {
                     "role": "system",
-                    "content": "You are a sophisticated AI trained to evaluate and provide constructive feedback on interview responses using the STAR method."
-                  },
-                  {
+                    "content": "You are a sophisticated AI trained to evaluate and provide constructive feedback on interview responses."
+                },
+                {
                     "role": "user",
-                    "content": "Here's my interview response for grading: ${answer}. Please critique this response thoroughly, focusing on how effectively I've used the STAR method, the clarity and relevance of my examples, and any suggestions for improvement. Your feedback should help me refine my approach and enhance my response for future interviews."
-                  }
+                    "content": `Question: ${question}\nAnswer: ${answer}\n\nPlease critique this response thoroughly, focusing on how effectively I've answered the question, the clarity and relevance of my examples, and any suggestions for improvement. Your feedback should help me refine my approach and enhance my response for future interviews.`
+                }
             ],
-            max_tokens: 150
+            max_tokens: 250 // Adjusted to allow for longer feedback if necessary
         });
         const feedback = response.choices[0].message.content.trim();
         res.json({ feedback });
@@ -65,6 +67,7 @@ app.post('/submit-answer', async (req, res) => {
         res.status(500).json({ feedback: 'Error processing your answer. Please try again.' });
     }
 });
+
 
 // Add endpoint to receive and transcribe audio
 app.post('/transcribe-audio', (req, res) => {
