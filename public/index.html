@@ -75,6 +75,7 @@
             <img src="loading.gif" class="loading-gif" id="loadingFeedback"/>
             <div id="feedbackText"></div>
         </div>
+        <button id="refreshButton" onclick="refreshPage()">Refresh Interview</button>
     </div>
 
     <script>
@@ -161,6 +162,25 @@ async function submitAnswer(answer, question) {
     const data = await response.json();
     document.getElementById('loadingFeedback').style.display = 'none';
     document.getElementById('feedbackText').innerText = data.feedback;
+}
+function refreshPage() {
+    // Reset text fields
+    document.getElementById('questionText').innerText = "Press 'Generate Question' to start";
+    document.getElementById('transcribedText').innerText = "Waiting on user's response";
+    document.getElementById('feedbackText').innerText = '';
+
+    // Hide GIFs
+    document.getElementById('loadingQuestion').style.display = 'none';
+    document.getElementById('loadingFeedback').style.display = 'none';
+    document.getElementById('loadingTranscription').style.display = 'none';
+
+    // Reset buttons
+    document.getElementById('startRecord').disabled = false;
+    document.getElementById('startRecord').style.display = 'inline-block';
+    document.getElementById('stopRecord').style.display = 'none';
+
+    // Fetch a new question
+    getQuestion();
 }
 
     </script>
