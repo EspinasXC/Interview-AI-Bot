@@ -51,11 +51,11 @@ app.post('/submit-answer', async (req, res) => {
             messages: [
                 {
                     "role": "system",
-                    "content": "You are a sophisticated AI trained to evaluate and provide constructive feedback on interview responses."
+                    "content": "You are a sophisticated AI trained to evaluate and provide constructive feedback on interview responses using the STAR method."
                 },
                 {
                     "role": "user",
-                    "content": `Question: ${question}\nAnswer: ${answer}\n\nPlease critique this response thoroughly, focusing on how effectively I've answered the question, the clarity and relevance of my examples, and any suggestions for improvement. Your feedback should help me refine my approach and enhance my response for future interviews.`
+                    "content": `Here is the interview question I was given: ${question}. Here's my interview response for grading: ${answer}. Please critique this response thoroughly, focusing on how effectively I've used the STAR method, the clarity and relevance of my examples, and any suggestions for improvement. Your feedback should help me refine my approach and enhance my response for future interviews.`
                 }
             ],
             max_tokens: 250 // Adjusted to allow for longer feedback if necessary
